@@ -407,19 +407,27 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
 	var tlsPemFileName string
 	var ingressMTLSFileName string
+	var egressMTLSFileName string
+	var trustedCAFileName string
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 
 	if virtualServerEx.TLSSecret != nil {
 		tlsPemFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.TLSSecret)
 	}
 	if virtualServerEx.IngressMTLSCert != nil {
-		ingressMTLSFileName = cnf.addOrUpdateIngressMTLSecret(virtualServerEx.IngressMTLSCert)
+		ingressMTLSFileName = cnf.addOrUpdateCASecret(virtualServerEx.IngressMTLSCert)
+	}
+	if virtualServerEx.TrustedCASecret != nil {
+		trustedCAFileName = cnf.addOrUpdateCASecret(virtualServerEx.TrustedCASecret)
+	}
+	if virtualServerEx.EgressTLSSecret != nil {
+		egressMTLSFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.EgressTLSSecret)
 	}
 
 	jwtKeys := cnf.addOrUpdateJWKSecretsForVirtualServer(virtualServerEx.JWTKeys)
 
 	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams)
-	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName, jwtKeys, ingressMTLSFileName)
+	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName, jwtKeys, ingressMTLSFileName, egressMTLSFileName, trustedCAFileName)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
 		return warnings, fmt.Errorf("Error generating VirtualServer config: %v: %v", name, err)
@@ -585,7 +593,7 @@ func (cnf *Configurator) updateJWKSecret(ingEx *IngressEx) string {
 	return cnf.nginxManager.GetFilenameForSecret(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
 }
 
-func (cnf *Configurator) addOrUpdateIngressMTLSecret(secret *api_v1.Secret) string {
+func (cnf *Configurator) addOrUpdateCASecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := GenerateCAFileContent(secret)
 	return cnf.nginxManager.CreateSecret(name, data, nginx.TLSSecretFileMode)
@@ -620,9 +628,9 @@ func (cnf *Configurator) AddOrUpdateJWKSecret(secret *api_v1.Secret, virtualServ
 	return allWarnings, nil
 }
 
-// AddOrUpdateIngressMTLSSecret adds a IngressMTLS secret to the filesystem or updates it if it already exists.
-func (cnf *Configurator) AddOrUpdateIngressMTLSSecret(secret *api_v1.Secret, virtualServerExes []*VirtualServerEx) (Warnings, error) {
-	cnf.addOrUpdateIngressMTLSecret(secret)
+// AddOrUpdateCASecret adds a CA secret to the filesystem or updates it if it already exists.
+func (cnf *Configurator) AddOrUpdateCASecret(secret *api_v1.Secret, virtualServerExes []*VirtualServerEx) (Warnings, error) {
+	cnf.addOrUpdateCASecret(secret)
 
 	allWarnings := newWarnings()
 

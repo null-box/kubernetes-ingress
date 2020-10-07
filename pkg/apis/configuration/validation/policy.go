@@ -47,8 +47,13 @@ func validatePolicySpec(spec *v1alpha1.PolicySpec, fieldPath *field.Path, isPlus
 		fieldCount++
 	}
 
+	if spec.EgressMTLS != nil {
+		allErrs = append(allErrs, validateEgressMTLS(spec.EgressMTLS, fieldPath.Child("egressMTLS"))...)
+		fieldCount++
+	}
+
 	if fieldCount != 1 {
-		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`"
+		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`"
 		if isPlus {
 			msg = fmt.Sprint(msg, ", `jwt`")
 		}
@@ -142,6 +147,24 @@ func validateIngressMTLS(ingressMTLS *v1alpha1.IngressMTLS, fieldPath *field.Pat
 	if ingressMTLS.VerifyDepth != nil {
 		allErrs = append(allErrs, validatePositiveIntOrZero(*ingressMTLS.VerifyDepth, fieldPath.Child("verifyDepth"))...)
 	}
+	return allErrs
+
+}
+
+func validateEgressMTLS(egressMTLS *v1alpha1.EgressMTLS, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	allErrs = append(allErrs, validateSecretName(egressMTLS.TLSSecret, fieldPath.Child("tlsSecret"))...)
+
+	if egressMTLS.VerifyServer != nil && *egressMTLS.VerifyServer == true && egressMTLS.TrustedCertSecret == "" {
+		return append(allErrs, field.Required(fieldPath.Child("trustedCertSecret"), "trustedCertSecret is required when enabling verifyServer"))
+	}
+	allErrs = append(allErrs, validateSecretName(egressMTLS.TrustedCertSecret, fieldPath.Child("trustedCertSecret"))...)
+
+	if egressMTLS.VerifyDepth != nil {
+		allErrs = append(allErrs, validatePositiveIntOrZero(*egressMTLS.VerifyDepth, fieldPath.Child("verifyDepth"))...)
+	}
+
 	return allErrs
 
 }

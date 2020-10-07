@@ -86,6 +86,20 @@ type IngressMTLS struct {
 	VerifyDepth  int
 }
 
+// EgressMTLS defines TLS configuration for a location.
+type EgressMTLS struct {
+	Certificate    string
+	CertificateKey string
+	VerifyServer   bool
+	VerifyDepth    int
+	Ciphers        string
+	Protocols      string
+	TrustedCert    string
+	SessionReuse   bool
+	ServerName     bool
+	SSLName        string
+}
+
 // Location defines a location.
 type Location struct {
 	Path                     string
@@ -121,6 +135,7 @@ type Location struct {
 	LimitReqOptions          LimitReqOptions
 	LimitReqs                []LimitReq
 	JWTAuth                  *JWTAuth
+	EgressMTLS               *EgressMTLS
 	PoliciesErrorReturn      *Return
 }
 

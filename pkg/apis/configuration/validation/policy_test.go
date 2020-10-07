@@ -597,3 +597,37 @@ func TestValidateIngressMTLSVerifyClient(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateEgressMTLS(t *testing.T) {
+	tests := []struct {
+		eg  *v1alpha1.EgressMTLS
+		msg string
+	}{
+		{
+			eg: &v1alpha1.EgressMTLS{
+				TLSSecret: "mtls-secret",
+			},
+			msg: "tls secret",
+		},
+		{
+			eg: &v1alpha1.EgressMTLS{
+				TrustedCertSecret: "tls-secret",
+				VerifyServer:      createPointerFromBool(true),
+				VerifyDepth:       createPointerFromInt(2),
+			},
+			msg: "verify server set to true",
+		},
+		{
+			eg: &v1alpha1.EgressMTLS{
+				VerifyServer: createPointerFromBool(false),
+			},
+			msg: "verify server set to false",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateEgressMTLS(test.eg, field.NewPath("egressMTLS"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateIngressMTLS() returned errors %v for valid input for the case of %v", allErrs, test.msg)
+		}
+	}
+}
