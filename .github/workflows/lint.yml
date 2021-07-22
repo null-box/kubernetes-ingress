@@ -6,7 +6,6 @@ on:
       - master
     paths-ignore:
       - 'docs/**'
-      - 'docs-web/**'
       - 'examples/**'
       - 'examples-of-custom-resources/**'
       - '**.md'
@@ -20,19 +19,18 @@ defaults:
     shell: bash
 
 env:
-  GOLANGCI_VERSION: 1.32
   GOLANGCI_TIMEOUT: 10m0s
 
 jobs:
 
   lint:
     name: Lint
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Lint Code
         uses: golangci/golangci-lint-action@v2
         with:
-          version: 'v${{ env.GOLANGCI_VERSION }}'
           args: --timeout ${{ env.GOLANGCI_TIMEOUT }}
+          only-new-issues: true

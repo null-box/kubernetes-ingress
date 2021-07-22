@@ -482,7 +482,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 		},
-		HTTPSnippets:  []string{""},
+		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
@@ -506,6 +506,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "tea-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc",
 				},
 				{
@@ -517,6 +518,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "tea-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc",
 				},
 				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
@@ -537,6 +539,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					},
 					ProxySSLName:            "coffee-svc.default.svc",
 					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:             "coffee-svc",
 				},
 				{
@@ -548,6 +551,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "coffee-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "coffee-svc",
 					IsVSR:                    true,
 					VSRName:                  "coffee",
@@ -562,6 +566,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "sub-tea-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "sub-tea-svc",
 					IsVSR:                    true,
 					VSRName:                  "subtea",
@@ -585,6 +590,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					},
 					ProxySSLName:            "coffee-svc.default.svc",
 					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:             "coffee-svc",
 					IsVSR:                   true,
 					VSRName:                 "subcoffee",
@@ -607,6 +613,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					},
 					ProxySSLName:            "coffee-svc.default.svc",
 					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:             "coffee-svc",
 					IsVSR:                   true,
 					VSRName:                 "subcoffee",
@@ -634,9 +641,9 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		&StaticConfigParams{TLSPassthrough: true},
 	)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
 
 	if len(warnings) != 0 {
@@ -705,7 +712,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 				Keepalive: 16,
 			},
 		},
-		HTTPSnippets:  []string{""},
+		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
@@ -729,6 +736,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "tea-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc",
 				},
 			},
@@ -741,9 +749,9 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true}
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
 
 	if len(warnings) != 0 {
@@ -946,7 +954,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 				},
 			},
 		},
-		HTTPSnippets:  []string{""},
+		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:  "cafe.example.com",
@@ -973,6 +981,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v1.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc-v1",
 				},
 				{
@@ -984,6 +993,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v2.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc-v2",
 				},
 				{
@@ -995,6 +1005,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v1.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "coffee-svc-v1",
 					IsVSR:                    true,
 					VSRName:                  "coffee",
@@ -1009,6 +1020,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v2.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "coffee-svc-v2",
 					IsVSR:                    true,
 					VSRName:                  "coffee",
@@ -1022,9 +1034,9 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	isResolverConfigured := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
 
 	if len(warnings) != 0 {
@@ -1259,7 +1271,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 				},
 			},
 		},
-		HTTPSnippets:  []string{""},
+		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:  "cafe.example.com",
@@ -1286,6 +1298,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v2.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc-v2",
 				},
 				{
@@ -1297,6 +1310,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v1.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc-v1",
 				},
 				{
@@ -1308,6 +1322,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v2.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "coffee-svc-v2",
 					IsVSR:                    true,
 					VSRName:                  "coffee",
@@ -1322,6 +1337,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v1.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "coffee-svc-v1",
 					IsVSR:                    true,
 					VSRName:                  "coffee",
@@ -1335,9 +1351,9 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	isResolverConfigured := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
 
 	if len(warnings) != 0 {
@@ -1572,7 +1588,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 				},
 			},
 		},
-		HTTPSnippets:  []string{""},
+		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:  "example.com",
@@ -1808,7 +1824,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 	isResolverConfigured := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -1861,6 +1877,10 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 				},
 			},
+		},
+		apResources: map[string]string{
+			"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
+			"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 		},
 	}
 
@@ -2170,6 +2190,39 @@ func TestGeneratePolicies(t *testing.T) {
 				OIDC: true,
 			},
 			msg: "oidc reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "waf-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/waf-policy": {
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "default/dataguard-alarm",
+							SecurityLog: &conf_v1.SecurityLog{
+								Enable:    true,
+								ApLogConf: "default/logconf",
+								LogDest:   "syslog:server=127.0.0.1:514",
+							},
+						},
+					},
+				},
+			},
+			context: "route",
+			expected: policiesCfg{
+				WAF: &version2.WAF{
+					Enable:              "on",
+					ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+					ApSecurityLogEnable: true,
+					ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf syslog:server=127.0.0.1:514",
+				},
+			},
+			msg: "WAF reference",
 		},
 	}
 
@@ -3230,6 +3283,64 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			msg: "multi oidc",
 		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "waf-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "waf-policy2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/waf-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "waf-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "default/dataguard-alarm",
+						},
+					},
+				},
+				"default/waf-policy2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "waf-policy2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "default/dataguard-alarm",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				apResources: map[string]string{
+					"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
+					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				},
+			},
+			context: "route",
+			expected: policiesCfg{
+				WAF: &version2.WAF{
+					Enable:   "on",
+					ApPolicy: "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Multiple WAF policies in the same context is not valid. WAF policy default/waf-policy2 will be ignored`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "multi waf",
+		},
 	}
 
 	for _, test := range tests {
@@ -3587,7 +3698,7 @@ func TestGenerateSnippets(t *testing.T) {
 		{
 			true,
 			"test",
-			[]string{""},
+			[]string{},
 			[]string{"test"},
 		},
 		{
@@ -3599,7 +3710,7 @@ func TestGenerateSnippets(t *testing.T) {
 		{
 			true,
 			"test\none\ntwo",
-			[]string{""},
+			[]string{},
 			[]string{"test", "one", "two"},
 		},
 		{
@@ -3672,6 +3783,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 		ProxyNextUpstreamTimeout: "0s",
 		ProxyNextUpstreamTries:   0,
 		ProxyPassRequestHeaders:  true,
+		ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 		ServiceName:              "",
 		IsVSR:                    false,
 		VSRName:                  "",
@@ -3679,8 +3791,8 @@ func TestGenerateLocationForProxying(t *testing.T) {
 	}
 
 	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams, nil, false, 0, "", nil, "", vsLocSnippets, false, "", "")
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateLocationForProxying() returned \n%+v but expected \n%+v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateLocationForProxying() mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -3898,10 +4010,8 @@ func TestGenerateSSLConfig(t *testing.T) {
 				},
 			},
 			expectedSSL: &version2.SSL{
-				HTTP2:          false,
-				Certificate:    pemFileNameForMissingTLSSecret,
-				CertificateKey: pemFileNameForMissingTLSSecret,
-				Ciphers:        "NULL",
+				HTTP2:           false,
+				RejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
 				nil: []string{"TLS secret secret is invalid: secret doesn't exist"},
@@ -3921,10 +4031,8 @@ func TestGenerateSSLConfig(t *testing.T) {
 				},
 			},
 			expectedSSL: &version2.SSL{
-				HTTP2:          false,
-				Certificate:    pemFileNameForMissingTLSSecret,
-				CertificateKey: pemFileNameForMissingTLSSecret,
-				Ciphers:        "NULL",
+				HTTP2:           false,
+				RejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
 				nil: []string{"TLS secret secret is of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'"},
@@ -3945,10 +4053,10 @@ func TestGenerateSSLConfig(t *testing.T) {
 			},
 			inputCfgParams: &ConfigParams{},
 			expectedSSL: &version2.SSL{
-				HTTP2:          false,
-				Certificate:    "secret.pem",
-				CertificateKey: "secret.pem",
-				Ciphers:        "",
+				HTTP2:           false,
+				Certificate:     "secret.pem",
+				CertificateKey:  "secret.pem",
+				RejectHandshake: false,
 			},
 			expectedWarnings: Warnings{},
 			msg:              "normal case with HTTPS",
@@ -4408,6 +4516,7 @@ func TestGenerateSplits(t *testing.T) {
 			},
 			ProxySSLName:            "coffee-v1.default.svc",
 			ProxyPassRequestHeaders: true,
+			ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 			Snippets:                []string{locSnippet},
 			ServiceName:             "coffee-v1",
 			IsVSR:                   true,
@@ -4436,6 +4545,7 @@ func TestGenerateSplits(t *testing.T) {
 			},
 			ProxySSLName:            "coffee-v2.default.svc",
 			ProxyPassRequestHeaders: true,
+			ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 			Snippets:                []string{locSnippet},
 			ServiceName:             "coffee-v2",
 			IsVSR:                   true,
@@ -4550,6 +4660,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				Internal:                 true,
 				ProxySSLName:             "coffee-v1.default.svc",
 				ProxyPassRequestHeaders:  true,
+				ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:              "coffee-v1",
 				IsVSR:                    true,
 				VSRName:                  "coffee",
@@ -4564,6 +4675,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				Internal:                 true,
 				ProxySSLName:             "coffee-v2.default.svc",
 				ProxyPassRequestHeaders:  true,
+				ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:              "coffee-v2",
 				IsVSR:                    true,
 				VSRName:                  "coffee",
@@ -4857,6 +4969,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v1",
 				IsVSR:                   false,
 				VSRName:                 "",
@@ -4884,6 +4997,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v1",
 				IsVSR:                   false,
 				VSRName:                 "",
@@ -4911,6 +5025,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v2",
 				IsVSR:                   false,
 				VSRName:                 "",
@@ -4938,6 +5053,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "tea.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "tea",
 				IsVSR:                   false,
 				VSRName:                 "",
@@ -5173,6 +5289,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v1",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5200,6 +5317,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v2",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5227,6 +5345,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v2",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5254,6 +5373,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v1",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5281,6 +5401,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v1",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5308,6 +5429,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v2",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5742,6 +5864,33 @@ func TestGenerateHealthCheck(t *testing.T) {
 			upstreamName: upstreamName,
 			expected:     nil,
 			msg:          "HealthCheck not enabled",
+		},
+		{
+			upstream: conf_v1.Upstream{
+				HealthCheck: &conf_v1.HealthCheck{
+					Enable:         true,
+					Interval:       "1m 5s",
+					Jitter:         "2m 3s",
+					ConnectTimeout: "1m 10s",
+					SendTimeout:    "1m 20s",
+					ReadTimeout:    "1m 30s",
+				},
+			},
+			upstreamName: upstreamName,
+			expected: &version2.HealthCheck{
+				Name:                upstreamName,
+				ProxyConnectTimeout: "1m10s",
+				ProxySendTimeout:    "1m20s",
+				ProxyReadTimeout:    "1m30s",
+				ProxyPass:           fmt.Sprintf("http://%v", upstreamName),
+				URI:                 "/",
+				Interval:            "1m5s",
+				Jitter:              "2m3s",
+				Fails:               1,
+				Passes:              1,
+				Headers:             make(map[string]string),
+			},
+			msg: "HealthCheck with time parameters have correct format",
 		},
 	}
 
@@ -6564,14 +6713,17 @@ func TestGenerateProxySetHeaders(t *testing.T) {
 	tests := []struct {
 		proxy    *conf_v1.ActionProxy
 		expected []version2.Header
+		msg      string
 	}{
 		{
 			proxy:    nil,
-			expected: nil,
+			expected: []version2.Header{{Name: "Host", Value: "$host"}},
+			msg:      "no action proxy",
 		},
 		{
 			proxy:    &conf_v1.ActionProxy{},
-			expected: nil,
+			expected: []version2.Header{{Name: "Host", Value: "$host"}},
+			msg:      "empty action proxy",
 		},
 		{
 			proxy: &conf_v1.ActionProxy{
@@ -6580,10 +6732,6 @@ func TestGenerateProxySetHeaders(t *testing.T) {
 						{
 							Name:  "Header-Name",
 							Value: "HeaderValue",
-						},
-						{
-							Name:  "Host",
-							Value: "nginx.org",
 						},
 					},
 				},
@@ -6595,16 +6743,106 @@ func TestGenerateProxySetHeaders(t *testing.T) {
 				},
 				{
 					Name:  "Host",
-					Value: "nginx.org",
+					Value: "$host",
 				},
 			},
+			msg: "set headers without host",
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RequestHeaders: &conf_v1.ProxyRequestHeaders{
+					Set: []conf_v1.Header{
+						{
+							Name:  "Header-Name",
+							Value: "HeaderValue",
+						},
+						{
+							Name:  "Host",
+							Value: "example.com",
+						},
+					},
+				},
+			},
+			expected: []version2.Header{
+				{
+					Name:  "Header-Name",
+					Value: "HeaderValue",
+				},
+				{
+					Name:  "Host",
+					Value: "example.com",
+				},
+			},
+			msg: "set headers with host capitalized",
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RequestHeaders: &conf_v1.ProxyRequestHeaders{
+					Set: []conf_v1.Header{
+						{
+							Name:  "Header-Name",
+							Value: "HeaderValue",
+						},
+						{
+							Name:  "hoST",
+							Value: "example.com",
+						},
+					},
+				},
+			},
+			expected: []version2.Header{
+				{
+					Name:  "Header-Name",
+					Value: "HeaderValue",
+				},
+				{
+					Name:  "hoST",
+					Value: "example.com",
+				},
+			},
+			msg: "set headers with host in mixed case",
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RequestHeaders: &conf_v1.ProxyRequestHeaders{
+					Set: []conf_v1.Header{
+						{
+							Name:  "Header-Name",
+							Value: "HeaderValue",
+						},
+						{
+							Name:  "Host",
+							Value: "one.example.com",
+						},
+						{
+							Name:  "Host",
+							Value: "two.example.com",
+						},
+					},
+				},
+			},
+			expected: []version2.Header{
+				{
+					Name:  "Header-Name",
+					Value: "HeaderValue",
+				},
+				{
+					Name:  "Host",
+					Value: "one.example.com",
+				},
+				{
+					Name:  "Host",
+					Value: "two.example.com",
+				},
+			},
+			msg: "set headers with multiple hosts",
 		},
 	}
 
 	for _, test := range tests {
 		result := generateProxySetHeaders(test.proxy)
-		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("generateProxySetHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+		if diff := cmp.Diff(test.expected, result); diff != "" {
+			t.Errorf("generateProxySetHeaders() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }
@@ -6856,6 +7094,226 @@ func TestGetUpstreamResourceLabels(t *testing.T) {
 		result := getUpstreamResourceLabels(test.owner)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("getUpstreamResourceLabels(%+v) returned %+v but expected %+v", test.owner, result, test.expected)
+		}
+	}
+}
+
+func TestAddWafConfig(t *testing.T) {
+	tests := []struct {
+		wafInput     *conf_v1.WAF
+		polKey       string
+		polNamespace string
+		apResources  map[string]string
+		wafConfig    *version2.WAF
+		expected     *validationResults
+		msg          string
+	}{
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable: true,
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "default",
+			apResources:  map[string]string{},
+			wafConfig: &version2.WAF{
+				Enable: "on",
+			},
+			expected: &validationResults{isError: false},
+			msg:      "valid waf config, default App Protect config",
+		},
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApPolicy: "dataguard-alarm",
+				SecurityLog: &conf_v1.SecurityLog{
+					Enable:    true,
+					ApLogConf: "logconf",
+					LogDest:   "syslog:server=127.0.0.1:514",
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "default",
+			apResources: map[string]string{
+				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
+			expected: &validationResults{isError: false},
+			msg:      "valid waf config",
+		},
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApPolicy: "default/dataguard-alarm",
+				SecurityLog: &conf_v1.SecurityLog{
+					Enable:    true,
+					ApLogConf: "default/logconf",
+					LogDest:   "syslog:server=127.0.0.1:514",
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "",
+			apResources: map[string]string{
+				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
+			expected: &validationResults{
+				isError: true,
+				warnings: []string{
+					`WAF policy default/waf-policy references an invalid or non-existing log config default/logconf`,
+				},
+			},
+			msg: "invalid waf config, apLogConf references non-existing log conf",
+		},
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApPolicy: "default/dataguard-alarm",
+				SecurityLog: &conf_v1.SecurityLog{
+					Enable:  true,
+					LogDest: "syslog:server=127.0.0.1:514",
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "",
+			apResources: map[string]string{
+				"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
+			expected: &validationResults{
+				isError: true,
+				warnings: []string{
+					`WAF policy default/waf-policy references an invalid or non-existing App Protect policy default/dataguard-alarm`,
+				},
+			},
+			msg: "invalid waf config, apLogConf references non-existing ap conf",
+		},
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApPolicy: "ns1/dataguard-alarm",
+				SecurityLog: &conf_v1.SecurityLog{
+					Enable:    true,
+					ApLogConf: "ns2/logconf",
+					LogDest:   "syslog:server=127.0.0.1:514",
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "",
+			apResources: map[string]string{
+				"ns1/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				"ns2/logconf":         "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+			},
+			expected: &validationResults{},
+			msg:      "valid waf config, cross ns reference",
+		},
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable:   false,
+				ApPolicy: "dataguard-alarm",
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "default",
+			apResources: map[string]string{
+				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				"default/logconf":         "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+			},
+			wafConfig: &version2.WAF{
+				Enable:   "off",
+				ApPolicy: "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+			},
+			expected: &validationResults{},
+			msg:      "valid waf config, disable waf",
+		},
+	}
+
+	for _, test := range tests {
+		polCfg := newPoliciesConfig()
+		result := polCfg.addWAFConfig(test.wafInput, test.polKey, test.polNamespace, test.apResources)
+		if diff := cmp.Diff(test.expected.warnings, result.warnings); diff != "" {
+			t.Errorf("policiesCfg.addWAFConfig() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		}
+	}
+}
+
+func TestGenerateTime(t *testing.T) {
+	tests := []struct {
+		value, expected string
+	}{
+		{
+			value:    "0s",
+			expected: "0s",
+		},
+		{
+			value:    "0",
+			expected: "0s",
+		},
+		{
+			value:    "1h",
+			expected: "1h",
+		},
+		{
+			value:    "1h 30m",
+			expected: "1h30m",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateTime(test.value)
+		if result != test.expected {
+			t.Errorf("generateTime(%q) returned %q but expected %q", test.value, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateTimeWithDefault(t *testing.T) {
+	tests := []struct {
+		value, defaultValue, expected string
+	}{
+		{
+			value:        "1h 30m",
+			defaultValue: "",
+			expected:     "1h30m",
+		},
+		{
+			value:        "",
+			defaultValue: "60s",
+			expected:     "60s",
+		},
+		{
+			value:        "",
+			defaultValue: "test",
+			expected:     "test",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateTimeWithDefault(test.value, test.defaultValue)
+		if result != test.expected {
+			t.Errorf("generateTimeWithDefault(%q, %q) returned %q but expected %q", test.value, test.defaultValue, result, test.expected)
 		}
 	}
 }

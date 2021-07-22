@@ -77,6 +77,7 @@ type Upstream struct {
 	SlowStart                string            `json:"slow-start"`
 	Queue                    *UpstreamQueue    `json:"queue"`
 	SessionCookie            *SessionCookie    `json:"sessionCookie"`
+	UseClusterIP             bool              `json:"use-cluster-ip"`
 }
 
 // UpstreamBuffers defines Buffer Configuration for an Upstream.
@@ -348,6 +349,7 @@ type PolicySpec struct {
 	IngressMTLS   *IngressMTLS   `json:"ingressMTLS"`
 	EgressMTLS    *EgressMTLS    `json:"egressMTLS"`
 	OIDC          *OIDC          `json:"oidc"`
+	WAF           *WAF           `json:"waf"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -420,4 +422,19 @@ type OIDC struct {
 	ClientSecret  string `json:"clientSecret"`
 	Scope         string `json:"scope"`
 	RedirectURI   string `json:"redirectURI"`
+}
+
+// WAF defines an WAF policy.
+// policy status: preview
+type WAF struct {
+	Enable      bool         `json:"enable"`
+	ApPolicy    string       `json:"apPolicy"`
+	SecurityLog *SecurityLog `json:"securityLog"`
+}
+
+// SecurityLog defines the security log of a WAF policy.
+type SecurityLog struct {
+	Enable    bool   `json:"enable"`
+	ApLogConf string `json:"apLogConf"`
+	LogDest   string `json:"logDest"`
 }
